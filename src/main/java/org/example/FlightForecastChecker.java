@@ -63,19 +63,28 @@ public class FlightForecastChecker {
         String toCity = flight.getString("to");
         int duration = flight.getInt("duration");
 
-        boolean departureWeather = checkWeatherConditions(forecast.getJSONArray(fromCity), departureTime, cityTimeZones.get(fromCity));
-        boolean arrivalWeather = checkWeatherConditions(forecast.getJSONArray(toCity), departureTime + duration, cityTimeZones.get(toCity));
+        // Для проверки погоды в городе отправления
+        boolean departureWeather = checkWeatherConditions(forecast.getJSONArray(fromCity), departureTime, cityTimeZones.get(fromCity), cityTimeZones.get(fromCity));
+
+        // Для проверки погоды в городе прибытия
+        boolean arrivalWeather = checkWeatherConditions(forecast.getJSONArray(toCity), departureTime + duration, cityTimeZones.get(fromCity), cityTimeZones.get(toCity));
 
         String status = (departureWeather && arrivalWeather) ? "по расписанию" : "отменен";
         return String.format("%s | %s -> %s | %s", no, fromCity, toCity, status);
     }
 
-    private static boolean checkWeatherConditions(JSONArray cityForecast, int time, ZoneId zoneId) {
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId).withHour(time % 24);
+    private static boolean checkWeatherConditions(JSONArray cityForecast, int time, ZoneId departureZoneId, ZoneId arrivalZoneId) {
+        // Сначала создаём метку времени отправления в часовом поясе города отправления
+        ZonedDateTime departureDateTime = ZonedDateTime.now(departureZoneId).withHour(time % 24);
+
+        // Затем преобразуем это время в часовой пояс города прибытия
+        ZonedDateTime arrivalDateTime = departureDateTime.withZoneSameInstant(arrivalZoneId);
+
+        // Используем час прибытия для проверки погоды
         for (int i = 0; i < cityForecast.length(); i++) {
             JSONObject weather = cityForecast.getJSONObject(i);
             int forecastTime = weather.getInt("time");
-            if (forecastTime == zonedDateTime.getHour()) {
+            if (forecastTime == arrivalDateTime.getHour()) {
                 int wind = weather.getInt("wind");
                 int visibility = weather.getInt("visibility");
                 return wind <= 30 && visibility >= 200;
