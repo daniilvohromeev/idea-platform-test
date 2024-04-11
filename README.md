@@ -36,5 +36,5 @@ The program outputs the status of each flight in the following format:
 
 ### Examples
 
-- `F1 | Moscow -> Novosibirsk | On Schedule`
-- `F2 | Moscow -> Omsk | Canceled`
+- `F1 | moscow -> novosibirsk | по расписанию`
+- `F2 | moscow -> omsk | отменен`
